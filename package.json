@@ -1,0 +1,15 @@
+{
+  "name": "Vault — Personal Finance",
+  "short_name": "Vault",
+  "description": "Your secure AI-powered finance dashboard",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#F2F5FA",
+  "theme_color": "#0D1F3C",
+  "orientation": "portrait",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ],
+  "categories": ["finance", "productivity"]
+}

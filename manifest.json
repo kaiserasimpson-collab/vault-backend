@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Vault">
+<title>Vault</title>
+<link rel="manifest" href="/manifest.json">
+<link rel="apple-touch-icon" href="/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Vault">
+<meta name="theme-color" content="#0D1F3C">
+<script src="https://cdn.plaid.com/link/v2/stable/link-initialize.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#ffffff;--bg2:#F2F5FA;--bg3:#EDF0F7;--bg4:#E6EDF7;
+  --text:#0D1F3C;--text2:#5A7A9A;--text3:#8899AA;
+  --border:#EDF0F7;--border2:#C5DEFF;
+  --blue:#378ADD;--green:#1D9E75;--red:#E24B4A;--amber:#EF9F27;
+  --radius:10px;--radius-lg:14px;
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg2);color:var(--text);min-height:100dvh;padding-bottom:calc(68px + env(safe-area-inset-bottom))}
+#login-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;background:var(--bg2)}
+.auth-box{background:#fff;border:1px solid var(--border);border-radius:20px;padding:32px 28px;width:100%;max-width:360px;box-shadow:0 4px 24px rgba(13,31,60,0.08)}
+.auth-logo{text-align:center;margin-bottom:28px}
+.auth-logo h1{font-size:36px;font-weight:700;letter-spacing:-1px;margin-bottom:4px;color:#0D1F3C}
+.auth-logo p{font-size:13px;color:var(--text2)}
+.auth-tabs{display:flex;border-bottom:1px solid var(--border);margin-bottom:20px}
+.auth-tab{flex:1;padding:8px;background:none;border:none;border-bottom:2px solid transparent;font-size:13px;cursor:pointer;color:var(--text3);font-family:inherit}
+.auth-tab.active{border-bottom-color:var(--blue);color:var(--blue);font-weight:600}
+.auth-error{background:#FFF0F0;color:#A32D2D;padding:10px 12px;border-radius:var(--radius);font-size:13px;margin-bottom:14px;display:none;border:1px solid #F7C1C1}
+.auth-input{width:100%;padding:10px 12px;border:1px solid var(--border3,#dde3ee);border-radius:var(--radius);font-size:14px;background:var(--bg2);color:var(--text);margin-bottom:10px;outline:none;font-family:inherit}
+.auth-input:focus{border-color:var(--blue);background:#fff}
+.auth-btn{width:100%;padding:12px;background:var(--blue);color:#fff;border:none;border-radius:var(--radius);font-size:14px;font-weight:600;cursor:pointer;font-family:inherit}
+.auth-btn:active{opacity:0.85}
+#main-app{display:none}
+.header{background:#fff;border-bottom:1px solid var(--border);padding:calc(env(safe-area-inset-top) + 14px) 20px 14px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10}
+.logo{font-size:20px;font-weight:700;letter-spacing:-0.5px;color:#0D1F3C}
+.live-pill{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--blue);background:#EBF4FF;padding:4px 10px;border-radius:20px;border:1px solid var(--border2)}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}
+.page{display:none;padding:16px;max-width:600px;margin:0 auto}
+.page.active{display:block}
+.hero-card{background:#0D1F3C;border-radius:18px;padding:22px 20px;margin-bottom:14px}
+.hero-label{font-size:10px;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:6px}
+.hero-amount{font-size:36px;font-weight:700;letter-spacing:-1.5px;color:#fff;margin-bottom:14px}
+.hero-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:0}
+.hero-stat{padding:10px 0;border-top:1px solid rgba(255,255,255,0.1)}
+.hero-stat-label{font-size:10px;color:rgba(255,255,255,0.45);margin-bottom:3px;text-transform:uppercase;letter-spacing:0.4px}
+.hero-stat-val{font-size:15px;font-weight:700;color:#fff}
+.hero-stat-val.pos{color:#5DCAA5}
+.card{background:#fff;border:1px solid var(--border);border-radius:var(--radius-lg);padding:13px 15px;margin-bottom:8px}
+.card-row{display:flex;align-items:center;justify-content:space-between}
+.card-left{display:flex;align-items:center;gap:11px}
+.icon{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;border:1px solid rgba(0,0,0,0.06)}
+.logo-wrap{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;border:1px solid rgba(0,0,0,0.06)}
+.logo-wrap img{width:26px;height:26px;object-fit:contain}
+.card-name{font-size:14px;font-weight:600;color:#0D1F3C}
+.card-sub{font-size:11px;color:var(--text2);margin-top:2px}
+.card-amount{font-size:15px;font-weight:700;color:#0D1F3C;text-align:right}
+.badge{font-size:10px;padding:2px 8px;border-radius:20px;margin-top:3px;display:inline-block;font-weight:500}
+.prog-bar{height:5px;background:var(--bg3);border-radius:10px;margin-top:10px;overflow:hidden}
+.prog-fill{height:100%;border-radius:10px;transition:width 0.5s}
+.metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:14px}
+.metric{background:#fff;border-radius:var(--radius);padding:12px 14px;border:1px solid var(--border)}
+.metric-label{font-size:10px;color:var(--text3);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.6px;font-weight:600}
+.metric-val{font-size:18px;font-weight:700;color:#0D1F3C}
+.add-row{display:flex;gap:8px;margin-bottom:12px}
+.add-row input{flex:1;font-size:14px;padding:10px 12px;border:1px solid var(--border);border-radius:var(--radius);background:#fff;color:var(--text);outline:none;font-family:inherit}
+.add-row input:focus{border-color:var(--blue)}
+.add-row button{font-size:13px;padding:10px 16px;border:1px solid var(--border2);border-radius:var(--radius);background:#EBF4FF;cursor:pointer;color:var(--blue);font-weight:600;font-family:inherit}
+.primary-btn{background:var(--blue);color:#fff;border:none;border-radius:var(--radius-lg);font-size:14px;font-weight:600;padding:12px;width:100%;cursor:pointer;font-family:inherit}
+.section-title{font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:10px}
+.gain-pos{color:var(--green);font-size:12px;font-weight:600}
+.gain-neg{color:var(--red);font-size:12px;font-weight:600}
+.flash{animation:fadeIn 0.4s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(3px)}to{opacity:1;transform:none}}
+.ai-panel{background:#fff;border:1.5px solid var(--border2);border-radius:var(--radius-lg);padding:14px 16px;margin-bottom:14px}
+.ai-row{display:flex;gap:8px}
+.ai-row input{flex:1;font-size:13px;padding:9px 12px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg2);color:var(--text);outline:none;font-family:inherit}
+.ai-row input:focus{border-color:var(--blue)}
+.ai-response{margin-top:12px;font-size:13px;color:var(--text2);line-height:1.6;border-top:1px solid var(--border);padding-top:10px;display:none}
+.ai-response.on{display:block}
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--border);display:flex;padding-bottom:env(safe-area-inset-bottom);z-index:10}
+.nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 0;cursor:pointer;background:none;border:none;color:var(--text3);font-size:10px;font-family:inherit;font-weight:500}
+.nav-btn.active{color:var(--blue)}
+.nav-btn svg{width:22px;height:22px}
+.connect-banner{background:#EBF4FF;border:1px solid var(--border2);border-radius:var(--radius-lg);padding:14px 16px;margin-bottom:14px;display:none;align-items:center;justify-content:space-between}
+</style>
+</head>
+<body>
+
+<div id="login-screen">
+  <div class="auth-box">
+    <div class="auth-logo">
+      <h1>Vault</h1>
+      <p>Your secure finance dashboard</p>
+    </div>
+    <div class="auth-tabs">
+      <button class="auth-tab active" id="tab-login">Log in</button>
+      <button class="auth-tab" id="tab-register">Sign up</button>
+    </div>
+    <div class="auth-error" id="auth-error"></div>
+    <input class="auth-input" id="auth-username" placeholder="Username" autocomplete="username" />
+    <input class="auth-input" id="auth-password" type="password" placeholder="Password" autocomplete="current-password" />
+    <button class="auth-btn" id="auth-submit">Log in</button>
+  </div>
+</div>
+
+<div id="main-app">
+  <div class="header">
+    <div class="logo">Vault</div>
+    <div style="display:flex;align-items:center;gap:8px">
+      <div class="live-pill"><div class="dot"></div><span>Live</span></div>
+      <button style="font-size:11px;padding:4px 10px;border:1px solid var(--border);border-radius:var(--radius);background:#fff;cursor:pointer;color:var(--text2);font-family:inherit" id="logout-btn">Log out</button>
+    </div>
+  </div>
+
+  <div class="page active" id="page-home">
+    <div class="connect-banner" id="connect-banner">
+      <div><div style="font-size:14px;font-weight:600;color:#0D1F3C">Connect your bank</div><div style="font-size:12px;color:var(--text2);margin-top:2px">Link accounts for real data</div></div>
+      <button id="plaid-connect-btn" style="font-size:13px;padding:8px 16px;background:var(--blue);color:#fff;border:none;border-radius:var(--radius);cursor:pointer;font-weight:600">Connect</button>
+    </div>
+    <div id="connected-accounts" style="display:none;margin-bottom:14px"></div>
+    <div class="hero-card">
+      <div class="hero-label">Net worth</div>
+      <div class="hero-amount" id="net-worth">—</div>
+      <div class="hero-stats">
+        <div class="hero-stat"><div class="hero-stat-label">Spent</div><div class="hero-stat-val" id="total-spent">—</div></div>
+        <div class="hero-stat" style="padding-left:12px;border-left:1px solid rgba(255,255,255,0.1)"><div class="hero-stat-label">Portfolio</div><div class="hero-stat-val pos" id="portfolio-val">—</div></div>
+        <div class="hero-stat" style="padding-left:12px;border-left:1px solid rgba(255,255,255,0.1)"><div class="hero-stat-label">Score</div><div class="hero-stat-val pos" id="credit-quick">—</div></div>
+      </div>
+    </div>
+    <div class="ai-panel">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <div style="display:flex;align-items:center;gap:6px"><div style="width:8px;height:8px;border-radius:50%;background:var(--blue)"></div><div style="font-size:13px;font-weight:600;color:var(--blue)">Vault AI</div></div>
+        <div style="font-size:11px;color:var(--text3)" id="ai-status">Ready</div>
+      </div>
+      <div class="ai-row">
+        <input id="ai-input" placeholder="Ask about your finances..." />
+        <button id="ai-ask-btn" style="font-size:13px;padding:9px 14px;border:1px solid var(--border2);border-radius:var(--radius);background:#EBF4FF;cursor:pointer;color:var(--blue);font-weight:600;font-family:inherit">Ask</button>
+      </div>
+      <div class="ai-response" id="ai-response"></div>
+    </div>
+    <div class="section-title">Recent transactions</div>
+    <div id="recent-txns"></div>
+  </div>
+
+  <div class="page" id="page-txns">
+    <div class="add-row"><input id="txn-input" placeholder="e.g. Netflix $15.99 Entertainment" /><button id="txn-add-btn">Add</button></div>
+    <div id="txn-list"></div>
+  </div>
+
+  <div class="page" id="page-budgets">
+    <div class="add-row"><input id="budget-input" placeholder="e.g. Entertainment $150" /><button id="budget-add-btn">Add</button></div>
+    <div id="budget-list"></div>
+  </div>
+
+  <div class="page" id="page-goals">
+    <div class="add-row"><input id="goal-input" placeholder="e.g. Vacation $2000" /><button id="goal-add-btn">Add</button></div>
+    <div id="goals-list"></div>
+  </div>
+
+  <div class="page" id="page-invest">
+    <div class="metrics">
+      <div class="metric"><div class="metric-label">Portfolio</div><div class="metric-val" id="invest-total">—</div></div>
+      <div class="metric"><div class="metric-label">Day gain</div><div class="metric-val" id="invest-daygain">—</div></div>
+      <div class="metric"><div class="metric-label">Total gain</div><div class="metric-val" id="invest-totalgain">—</div></div>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+      <div class="section-title" style="margin-bottom:0">Holdings</div>
+      <div id="price-status" style="font-size:11px;color:var(--text3)"></div>
+    </div>
+    <div id="invest-list"></div>
+    <div class="add-row"><input id="invest-input" placeholder="e.g. MSFT 3 shares at $415" /><button id="invest-add-btn">Add</button></div>
+  </div>
+
+  <div class="page" id="page-credit">
+    <div class="card" style="text-align:center;padding:24px 16px;margin-bottom:14px">
+      <div style="font-size:11px;color:var(--text2);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.5px">Estimated credit score</div>
+      <div id="credit-score-display" style="font-size:52px;font-weight:700;letter-spacing:-2px;margin-bottom:4px;color:#0D1F3C">—</div>
+      <div id="credit-rating" style="font-size:14px;color:var(--text2);margin-bottom:16px">Connect a bank to estimate</div>
+      <div id="credit-bar-wrap" style="height:8px;background:var(--bg3);border-radius:10px;overflow:hidden;margin-bottom:6px;display:none">
+        <div id="credit-bar-fill" style="height:100%;border-radius:10px;transition:width 0.8s"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text3)"><span>300</span><span>Poor</span><span>Fair</span><span>Good</span><span>Excellent</span><span>850</span></div>
+    </div>
+    <div id="credit-summary" style="display:none">
+      <div class="card" style="margin-bottom:8px"><div class="section-title">Score factors</div><div id="credit-factors"></div></div>
+      <div class="card" style="margin-bottom:8px"><div class="section-title">AI analysis</div><div id="credit-analysis" style="font-size:13px;color:var(--text2);line-height:1.6"></div></div>
+      <div class="card" style="margin-bottom:14px"><div class="section-title">Tips to improve</div><div id="credit-tips"></div></div>
+    </div>
+    <button class="primary-btn" id="credit-btn">Estimate my credit score</button>
+    <div id="credit-loading" style="text-align:center;padding:16px;font-size:13px;color:var(--text2);display:none">Analyzing your financial data...</div>
+    <p style="margin-top:12px;font-size:11px;color:var(--text3);text-align:center;line-height:1.5">AI estimate only — not an official score.</p>
+  </div>
+
+  <div class="bottom-nav">
+    <button class="nav-btn active" data-page="home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 12L12 3l9 9"/><path d="M9 21V12h6v9"/></svg>Home</button>
+    <button class="nav-btn" data-page="txns"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>Spend</button>
+    <button class="nav-btn" data-page="budgets"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>Budget</button>
+    <button class="nav-btn" data-page="goals"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>Goals</button>
+    <button class="nav-btn" data-page="invest"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>Stocks</button>
+    <button class="nav-btn" data-page="credit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Score</button>
+  </div>
+</div>
+
+<script>
+var authToken = localStorage.getItem('vault-token') || '';
+var authMode = 'login';
+
+var CAT = {
+  Food:{bg:'#E8F8F2',color:'#0F6E56'},
+  Gas:{bg:'#FFF8E6',color:'#854F0B'},
+  Shopping:{bg:'#F0EEFF',color:'#4A3DB5'},
+  Entertainment:{bg:'#EBF4FF',color:'#185FA5'},
+  Health:{bg:'#FFF0F0',color:'#991F1F'},
+  Other:{bg:'#F2F5FA',color:'#5A7A9A'}
+};
+
+var LOGOS = {
+  starbucks:'starbucks.com', amazon:'amazon.com', netflix:'netflix.com',
+  shell:'shell.com', chevron:'chevron.com', bp:'bp.com', exxon:'exxon.com',
+  walmart:'walmart.com', target:'target.com', costco:'costco.com',
+  apple:'apple.com', google:'google.com', microsoft:'microsoft.com',
+  uber:'uber.com', lyft:'lyft.com', spotify:'spotify.com',
+  paypal:'paypal.com', venmo:'venmo.com', nike:'nike.com',
+  doordash:'doordash.com', chipotle:'chipotle.com', 'mcdonald':'mcdonalds.com',
+  cvs:'cvs.com', walgreens:'walgreens.com', 'home depot':'homedepot.com',
+  costco:'costco.com', disney:'disney.com', hulu:'hulu.com',
+  twitter:'twitter.com', instagram:'instagram.com', meta:'meta.com',
+  nvidia:'nvidia.com', tesla:'tesla.com', aapl:'apple.com',
+  tsla:'tesla.com', msft:'microsoft.com', googl:'google.com',
+  amzn:'amazon.com', nvda:'nvidia.com', nflx:'netflix.com',
+  dis:'disney.com', lyft:'lyft.com', adidas:'adidas.com'
+};
+
+function getLogo(name) {
+  if (!name) return null;
+  var l = name.toLowerCase();
+  for (var k in LOGOS) {
+    if (l.includes(k)) return 'https://logo.clearbit.com/' + LOGOS[k];
+  }
+  var word = l.replace(/[^a-z]/g,'').slice(0,12);
+  return word.length > 3 ? 'https://logo.clearbit.com/' + word + '.com' : null;
+}
+
+function logoCard(name, ini, bg, color) {
+  var src = getLogo(name);
+  var div = document.createElement('div');
+  div.className = 'logo-wrap';
+  div.style.background = bg;
+  if (src) {
+    var img = document.createElement('img');
+    img.src = src;
+    img.onerror = function() {
+      this.style.display = 'none';
+      var sp = document.createElement('span');
+      sp.style.cssText = 'font-size:12px;font-weight:700;color:' + color;
+      sp.textContent = ini;
+      div.appendChild(sp);
+    };
+    div.appendChild(img);
+  } else {
+    var sp = document.createElement('span');
+    sp.style.cssText = 'font-size:12px;font-weight:700;color:' + color;
+    sp.textContent = ini;
+    div.appendChild(sp);
+  }
+  return div.outerHTML;
+}
+
+function gc(c) { return CAT[c] || CAT.Other; }
+function fmt(n) { return '$' + Math.abs(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+function ini(s) { return s.split(' ').map(function(w){return w[0]||''}).join('').toUpperCase().slice(0,2); }
+function authH() { return {'Content-Type':'application/json','Authorization':'Bearer '+authToken}; }
+
+// Auth
+document.getElementById('tab-login').addEventListener('click', function() {
+  authMode='login';
+  document.getElementById('tab-login').classList.add('active');
+  document.getElementById('tab-register').classList.remove('active');
+  document.getElementById('auth-submit').textContent='Log in';
+  document.getElementById('auth-error').style.display='none';
+});
+document.getElementById('tab-register').addEventListener('click', function() {
+  authMode='register';
+  document.getElementById('tab-register').classList.add('active');
+  document.getElementById('tab-login').classList.remove('active');
+  document.getElementById('auth-submit').textContent='Sign up';
+  document.getElementById('auth-error').style.display='none';
+});
+document.getElementById('auth-submit').addEventListener('click', submitAuth);
+document.getElementById('auth-password').addEventListener('keydown', function(e){if(e.key==='Enter')submitAuth();});
+
+async function submitAuth() {
+  var u=document.getElementById('auth-username').value.trim();
+  var p=document.getElementById('auth-password').value;
+  var err=document.getElementById('auth-error');
+  err.style.display='none';
+  if(!u||!p){err.textContent='Please enter username and password';err.style.display='block';return;}
+  try {
+    var r=await fetch('/api/auth/'+authMode,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:u,password:p})});
+    var d=await r.json();
+    if(d.error){err.textContent=d.error;err.style.display='block';return;}
+    authToken=d.token;
+    localStorage.setItem('vault-token',authToken);
+    document.getElementById('login-screen').style.display='none';
+    document.getElementById('main-app').style.display='block';
+    document.getElementById('connect-banner').style.display='flex';
+    renderAll(); loadPlaidData(); refreshStockPrices();
+    setInterval(refreshStockPrices,60000);
+  } catch(e){err.textContent='Cannot connect to server';err.style.display='block';}
+}
+
+document.getElementById('logout-btn').addEventListener('click', function(){
+  localStorage.removeItem('vault-token'); authToken='';
+  document.getElementById('main-app').style.display='none';
+  document.getElementById('login-screen').style.display='flex';
+});
+
+async function checkAuth() {
+  if(!authToken)return;
+  try{
+    var r=await fetch('/api/auth/me',{headers:{'Authorization':'Bearer '+authToken}});
+    if(r.ok){
+      document.getElementById('login-screen').style.display='none';
+      document.getElementById('main-app').style.display='block';
+      document.getElementById('connect-banner').style.display='flex';
+      renderAll(); loadPlaidData(); refreshStockPrices();
+      setInterval(refreshStockPrices,60000);
+    } else {localStorage.removeItem('vault-token');authToken='';}
+  }catch(e){}
+}
+
+// State
+var DEFAULT = {
+  transactions:[
+    {name:'Starbucks',amount:8.50,category:'Food',date:'Today'},
+    {name:'Shell Gas',amount:42.00,category:'Gas',date:'Yesterday'},
+    {name:'Amazon',amount:65.99,category:'Shopping',date:'Mar 28'}
+  ],
+  budgets:[{category:'Food',limit:500},{category:'Gas',limit:200},{category:'Shopping',limit:300}],
+  goals:[{name:'Christmas',target:500,saved:200},{name:'Birthday',target:200,saved:50}],
+  investments:[
+    {ticker:'AAPL',shares:5,avgCost:220,value:1200,gain:150,price:240,prevClose:238},
+    {ticker:'TSLA',shares:2,avgCost:225,value:800,gain:-50,price:400,prevClose:405}
+  ]
+};
+var state = DEFAULT;
+
+function totalSpent(){return state.transactions.reduce(function(a,t){return a+t.amount},0);}
+function portfolioVal(){return state.investments.reduce(function(a,i){return a+(i.price*i.shares||i.value||0)},0);}
+function netWorth(){return portfolioVal()+2000-totalSpent()+1531.99;}
+
+function updateMetrics(){
+  document.getElementById('net-worth').textContent=fmt(netWorth());
+  document.getElementById('total-spent').textContent=fmt(totalSpent());
+  document.getElementById('portfolio-val').textContent=fmt(portfolioVal());
+}
+
+function txnCard(t) {
+  var c=gc(t.category);
+  return '<div class="card flash"><div class="card-row"><div class="card-left">' +
+    logoCard(t.name,ini(t.name),c.bg,c.color) +
+    '<div><div class="card-name">'+t.name+'</div><div class="card-sub">'+t.date+'</div></div></div>' +
+    '<div style="text-align:right"><div class="card-amount">'+fmt(t.amount)+'</div>' +
+    '<div class="badge" style="background:'+c.bg+';color:'+c.color+'">'+t.category+'</div></div></div></div>';
+}
+
+function renderRecent(){document.getElementById('recent-txns').innerHTML=state.transactions.slice(0,3).map(txnCard).join('');}
+function renderTransactions(){document.getElementById('txn-list').innerHTML=state.transactions.map(txnCard).join('');}
+
+function renderBudgets(){
+  document.getElementById('budget-list').innerHTML=state.budgets.map(function(b){
+    var spent=state.transactions.filter(function(t){return t.category===b.category}).reduce(function(a,t){return a+t.amount},0);
+    var pct=Math.min(100,Math.round((spent/b.limit)*100));
+    var bar=pct>80?'#E24B4A':pct>50?'#EF9F27':'#1D9E75';
+    var c=gc(b.category);
+    return '<div class="card flash" style="flex-direction:column;align-items:stretch"><div style="display:flex;justify-content:space-between;margin-bottom:4px">' +
+      '<div style="display:flex;align-items:center;gap:8px"><div class="icon" style="width:28px;height:28px;background:'+c.bg+';color:'+c.color+';font-size:10px">'+ini(b.category)+'</div><div><div class="card-name">'+b.category+'</div><div class="card-sub">'+fmt(spent)+' of '+fmt(b.limit)+'</div></div></div>' +
+      '<div class="card-amount" style="font-size:14px">'+pct+'%</div></div>' +
+      '<div class="prog-bar"><div class="prog-fill" style="width:'+pct+'%;background:'+bar+'"></div></div></div>';
+  }).join('');
+}
+
+function renderGoals(){
+  document.getElementById('goals-list').innerHTML=state.goals.map(function(g){
+    var pct=Math.min(100,Math.round((g.saved/g.target)*100));
+    return '<div class="card flash" style="flex-direction:column;align-items:stretch"><div style="display:flex;justify-content:space-between;margin-bottom:4px">' +
+      '<div class="card-left"><div class="icon" style="background:#EBF4FF;color:#185FA5">'+ini(g.name)+'</div><div><div class="card-name">'+g.name+'</div><div class="card-sub">'+fmt(g.saved)+' of '+fmt(g.target)+'</div></div></div>' +
+      '<div class="card-amount" style="font-size:14px">'+pct+'%</div></div>' +
+      '<div class="prog-bar"><div class="prog-fill" style="width:'+pct+'%;background:#378ADD"></div></div></div>';
+  }).join('');
+}
+
+function renderInvestments(){
+  var el=document.getElementById('invest-list'); if(!el)return;
+  var tv=0,tg=0,dg=0;
+  el.innerHTML=state.investments.map(function(i){
+    var val=i.price*i.shares||i.value||0;
+    var gain=val-(i.avgCost*i.shares)||i.gain||0;
+    var d=(i.price-(i.prevClose||i.price))*i.shares;
+    tv+=val;tg+=gain;dg+=d;
+    var pos=gain>=0,dp=d>=0;
+    var bg=pos?'#E8F8F2':'#FFF0F0',co=pos?'#0F6E56':'#991F1F';
+    var chg=i.prevClose?((i.price-i.prevClose)/i.prevClose*100).toFixed(2):'0.00';
+    var live=i.livePrice?'<span style="font-size:10px;background:#EBF4FF;color:#185FA5;padding:1px 6px;border-radius:10px;margin-left:4px;font-weight:600">Live</span>':'';
+    return '<div class="card flash"><div class="card-row"><div class="card-left">' +
+      logoCard(i.ticker,i.ticker.slice(0,2),bg,co) +
+      '<div><div class="card-name" style="display:flex;align-items:center">'+i.ticker+live+'</div><div class="card-sub">'+i.shares+' shares</div></div></div>' +
+      '<div style="text-align:right"><div class="card-amount">'+fmt(val)+'</div><div class="'+(dp?'gain-pos':'gain-neg')+'">'+(dp?'+':'')+fmt(d)+' ('+(dp?'+':'')+chg+'%)</div></div></div></div>';
+  }).join('');
+  var it=document.getElementById('invest-total'),idg=document.getElementById('invest-daygain'),itg=document.getElementById('invest-totalgain');
+  if(it)it.textContent=fmt(tv);
+  if(idg){idg.textContent=(dg>=0?'+':'')+fmt(dg);idg.style.color=dg>=0?'#1D9E75':'#E24B4A';}
+  if(itg){itg.textContent=(tg>=0?'+':'')+fmt(tg);itg.style.color=tg>=0?'#1D9E75':'#E24B4A';}
+  document.getElementById('portfolio-val').textContent=fmt(tv);
+}
+
+function renderAll(){updateMetrics();renderRecent();renderTransactions();renderBudgets();renderGoals();renderInvestments();}
+
+// Nav
+document.querySelectorAll('.nav-btn').forEach(function(btn){
+  btn.addEventListener('click',function(){
+    document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active')});
+    document.querySelectorAll('.nav-btn').forEach(function(b){b.classList.remove('active')});
+    document.getElementById('page-'+btn.dataset.page).classList.add('active');
+    btn.classList.add('active');
+    window.scrollTo(0,0);
+  });
+});
+
+function parseAmount(str){var m=str.match(/\$?([\d.]+)/);return m?parseFloat(m[1]):0;}
+
+document.getElementById('txn-add-btn').addEventListener('click',function(){
+  var v=document.getElementById('txn-input').value.trim();if(!v)return;
+  var amount=parseAmount(v);
+  var cat=Object.keys(CAT).find(function(c){return v.toLowerCase().includes(c.toLowerCase())})||'Other';
+  var name=v.replace(/\$[\d.]+/,'').replace(new RegExp(cat,'gi'),'').trim()||'Purchase';
+  state.transactions.unshift({name:name,amount:amount,category:cat,date:'Just now'});
+  document.getElementById('txn-input').value='';
+  renderAll();saveUserData();
+});
+
+document.getElementById('budget-add-btn').addEventListener('click',function(){
+  var v=document.getElementById('budget-input').value.trim();if(!v)return;
+  var limit=parseAmount(v);
+  var cat=Object.keys(CAT).find(function(c){return v.toLowerCase().includes(c.toLowerCase())})||v.split(' ')[0];
+  var ex=state.budgets.findIndex(function(b){return b.category===cat});
+  if(ex>=0)state.budgets[ex].limit=limit;else state.budgets.push({category:cat,limit:limit});
+  document.getElementById('budget-input').value='';
+  renderAll();saveUserData();
+});
+
+document.getElementById('goal-add-btn').addEventListener('click',function(){
+  var v=document.getElementById('goal-input').value.trim();if(!v)return;
+  var target=parseAmount(v);
+  var name=v.replace(/\$[\d.]+/,'').trim()||'New Goal';
+  state.goals.push({name:name,target:target,saved:0});
+  document.getElementById('goal-input').value='';
+  renderAll();saveUserData();
+});
+
+document.getElementById('invest-add-btn').addEventListener('click',function(){
+  var v=document.getElementById('invest-input').value.trim();if(!v)return;
+  var tm=v.match(/\b([A-Z]{1,5})\b/),ticker=tm?tm[1]:v.split(' ')[0].toUpperCase();
+  var sm=v.match(/(\d+\.?\d*)\s*shares?/i)||v.match(/x(\d+)/i),shares=sm?parseFloat(sm[1]):1;
+  var pm=v.match(/(?:at|@|\$)\s*([\d.]+)/i)||v.match(/\$([\d.]+)/),avgCost=pm?parseFloat(pm[1]):0;
+  state.investments.push({ticker:ticker,shares:shares,avgCost:avgCost,value:avgCost*shares,gain:0,price:avgCost,prevClose:avgCost});
+  document.getElementById('invest-input').value='';
+  renderInvestments();saveUserData();refreshStockPrices();
+});
+
+// AI
+document.getElementById('ai-ask-btn').addEventListener('click',askAI);
+document.getElementById('ai-input').addEventListener('keydown',function(e){if(e.key==='Enter')askAI();});
+
+async function askAI(){
+  var q=document.getElementById('ai-input').value.trim();if(!q)return;
+  document.getElementById('ai-input').value='';
+  document.getElementById('ai-status').textContent='Thinking...';
+  document.getElementById('ai-response').className='ai-response';
+  var ctx={transactions:state.transactions,budgets:state.budgets,goals:state.goals,totalSpent:totalSpent(),netWorth:netWorth()};
+  try{
+    var r=await fetch('/api/ai-chat',{method:'POST',headers:authH(),body:JSON.stringify({question:q,context:ctx})});
+    var d=await r.json();
+    document.getElementById('ai-response').className='ai-response on flash';
+    document.getElementById('ai-response').textContent=d.response||d.error||'No response';
+    document.getElementById('ai-status').textContent='Done';
+    setTimeout(function(){document.getElementById('ai-status').textContent='Ready'},3000);
+  }catch(e){
+    document.getElementById('ai-response').className='ai-response on';
+    document.getElementById('ai-response').textContent='Could not reach AI.';
+    document.getElementById('ai-status').textContent='Error';
+  }
+}
+
+// Plaid
+document.getElementById('plaid-connect-btn').addEventListener('click',openPlaidLink);
+
+async function openPlaidLink(){
+  try{
+    var r=await fetch('/api/create-link-token',{method:'POST',headers:authH()});
+    var d=await r.json();
+    if(d.error){alert('Plaid error: '+d.error);return;}
+    Plaid.create({token:d.link_token,
+      onSuccess:async function(pt,meta){
+        var ex=await fetch('/api/exchange-token',{method:'POST',headers:authH(),body:JSON.stringify({public_token:pt,institution:meta.institution})});
+        var res=await ex.json();
+        if(res.success){document.getElementById('connect-banner').style.display='none';loadPlaidData();}
+      },
+      onExit:function(err){if(err)console.error('Plaid exit',err);}
+    }).open();
+  }catch(e){alert('Cannot reach backend.');}
+}
+
+function mapCat(c){
+  if(!c)return'Other';var cl=c.toLowerCase();
+  if(cl.includes('food')||cl.includes('restaurant'))return'Food';
+  if(cl.includes('gas')||cl.includes('fuel'))return'Gas';
+  if(cl.includes('shop')||cl.includes('retail'))return'Shopping';
+  if(cl.includes('health')||cl.includes('medical'))return'Health';
+  if(cl.includes('entertain'))return'Entertainment';
+  return'Other';
+}
+
+async function loadPlaidData(){
+  try{
+    var ar=await fetch('/api/accounts',{headers:authH()});
+    var tr=await fetch('/api/transactions',{headers:authH()});
+    var ir=await fetch('/api/investments',{headers:authH()});
+    var accounts=(await ar.json()).accounts;
+    var transactions=(await tr.json()).transactions;
+    var holdings=(await ir.json()).holdings;
+    if(accounts&&accounts.length){renderConnectedAccounts(accounts);}
+    if(transactions&&transactions.length){
+      state.transactions=transactions.map(function(t){return{name:t.name,amount:t.amount,category:mapCat(t.category),date:t.date}});
+      renderTransactions();renderRecent();renderBudgets();
+    }
+    if(holdings&&holdings.length){
+      state.investments=holdings.map(function(h){return{ticker:h.ticker,shares:h.shares,avgCost:(h.costBasis/h.shares)||0,value:h.value,gain:h.gain,price:h.price,prevClose:h.prevClose||h.price,livePrice:h.livePrice||false}});
+      renderInvestments();
+    }
+    updateMetrics();
+  }catch(e){console.error('loadPlaidData',e);}
+}
+
+function renderConnectedAccounts(accounts){
+  var el=document.getElementById('connected-accounts');if(!el)return;
+  el.style.display='block';
+  var icons={depository:'🏦',credit:'💳',investment:'📈',loan:'📋'};
+  el.innerHTML='<div class="section-title">Connected accounts</div>'+accounts.map(function(a){
+    return '<div class="card flash"><div class="card-row"><div class="card-left">' +
+      '<div class="icon" style="background:#EBF4FF;color:#185FA5;font-size:16px">'+(icons[a.type]||'🏦')+'</div>' +
+      '<div><div class="card-name">'+a.name+'</div><div class="card-sub">'+a.institution+' · '+a.subtype+'</div></div></div>' +
+      '<div style="text-align:right"><div class="card-amount">'+fmt(a.balance||0)+'</div>'+(a.available!=null?'<div class="card-sub">'+fmt(a.available)+' avail</div>':'')+'</div></div></div>';
+  }).join('');
+}
+
+async function refreshStockPrices(){
+  if(!authToken||!state.investments||!state.investments.length)return;
+  var tickers=state.investments.map(function(i){return i.ticker}).filter(function(t){return t&&/^[A-Z]{1,5}$/.test(t)});
+  if(!tickers.length)return;
+  try{
+    var r=await fetch('/api/stocks/batch',{method:'POST',headers:authH(),body:JSON.stringify({tickers:tickers})});
+    var data=await r.json();
+    if(!data.prices)return;
+    state.investments=state.investments.map(function(inv){
+      var live=data.prices[inv.ticker];if(!live)return inv;
+      return Object.assign({},inv,{price:live.price,prevClose:live.prevClose,change:live.change,changePct:live.changePct,value:live.price*inv.shares,gain:(live.price*inv.shares)-(inv.avgCost*inv.shares),livePrice:true});
+    });
+    renderInvestments();updateMetrics();
+    var el=document.getElementById('price-status');
+    if(el&&data.updatedAt)el.textContent='Live · '+new Date(data.updatedAt).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+  }catch(e){}
+}
+
+document.getElementById('credit-btn').addEventListener('click',loadCreditScore);
+
+async function loadCreditScore(){
+  var btn=document.getElementById('credit-btn'),loading=document.getElementById('credit-loading'),summary=document.getElementById('credit-summary');
+  btn.style.display='none';loading.style.display='block';summary.style.display='none';
+  try{
+    var r=await fetch('/api/credit-score',{method:'POST',headers:authH()});
+    var data=await r.json();
+    if(data.error)throw new Error(data.error);
+    var mid=Math.round((data.scoreMin+data.scoreMax)/2);
+    var pct=((mid-300)/550)*100;
+    var color=mid>=750?'#1D9E75':mid>=700?'#378ADD':mid>=650?'#EF9F27':mid>=600?'#D85A30':'#E24B4A';
+    document.getElementById('credit-score-display').textContent=data.scoreMin+'–'+data.scoreMax;
+    document.getElementById('credit-score-display').style.color=color;
+    document.getElementById('credit-rating').textContent=data.rating;
+    document.getElementById('credit-rating').style.color=color;
+    document.getElementById('credit-quick').textContent=mid;
+    var bw=document.getElementById('credit-bar-wrap');bw.style.display='block';
+    document.getElementById('credit-bar-fill').style.width=pct+'%';
+    document.getElementById('credit-bar-fill').style.background=color;
+    document.getElementById('credit-factors').innerHTML=(data.factors||[]).map(function(f){
+      var dot=f.impact==='positive'?'#1D9E75':f.impact==='negative'?'#E24B4A':'#8899AA';
+      return '<div style="display:flex;gap:10px;align-items:flex-start;margin-bottom:10px"><div style="width:8px;height:8px;border-radius:50%;background:'+dot+';flex-shrink:0;margin-top:5px"></div><div><div style="font-size:13px;font-weight:600;color:#0D1F3C">'+f.name+'</div><div style="font-size:12px;color:#5A7A9A;margin-top:2px">'+f.detail+'</div></div></div>';
+    }).join('');
+    document.getElementById('credit-analysis').textContent=data.summary||'';
+    document.getElementById('credit-tips').innerHTML=(data.tips||[]).map(function(tip,i){
+      return '<div style="display:flex;gap:10px;margin-bottom:8px;font-size:13px;color:#5A7A9A"><span style="font-weight:700;color:#0D1F3C;min-width:16px">'+(i+1)+'.</span>'+tip+'</div>';
+    }).join('');
+    summary.style.display='block';loading.style.display='none';
+    btn.textContent='Refresh estimate';btn.style.display='block';
+  }catch(e){
+    loading.style.display='none';btn.style.display='block';btn.textContent='Try again';
+    document.getElementById('credit-rating').textContent='Error: '+e.message;
+  }
+}
+
+async function saveUserData(){
+  if(!authToken)return;
+  try{await fetch('/api/userdata',{method:'POST',headers:authH(),body:JSON.stringify({budgets:state.budgets,goals:state.goals,investments:state.investments})});}catch(e){}
+}
+
+checkAuth();
+
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js').catch(function(){});
+}
+
+</script>
+</body>
+</html>
